@@ -1,0 +1,7 @@
+---
+- hosts: localhost
+  tasks:
+    - name: install go
+      dnf:
+        name: go
+        state: latest
