@@ -1,0 +1,50 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+    - name: Install package GIT
+      package:
+        name: git
+        state: latest 
+    - name: Example clone of a single branch
+      git:
+         repo: https://github.com/BastienBalaud/golang-myip
+         dest: /opt/golang-myip/
+         clone: yes
+         update: yes
+    - name: Install package make
+      package:
+        name: make
+        state: latest
+    - name: Install package go
+      package:
+        name: go
+        state: latest
+    - name: Compilation de golange-myip
+      make:
+        chdir: /opt/golang-myip/
+    - name: creation service golang-myip
+      ansible.builtin.file:
+        path: "/etc/systemd/system/golang.service"
+        state: touch
+    - name: Ajout du contenu du service golang-myip
+      copy:
+        dest: "/etc/systemd/system/golang.service"
+        content: |
+          Description=Golang Service to run on start
+
+          [Service]
+          Type=simple
+          ExecStart=/opt/golang-myip/build/server.x86_64 --port 80
+          Restart=on-failure
+          RestartSec=10
+          KillMode=process
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Start service golang-myip, based on running process /etc/systemd/system/golang.service
+      ansible.builtin.service:
+        name: golang
+        pattern: /etc/systemd/system/golang.service
+        state: started
+        enabled: yes
